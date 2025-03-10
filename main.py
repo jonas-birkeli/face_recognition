@@ -11,6 +11,7 @@ without relying on built-in face detection.
 """
 
 from src.preprocessing import grayscale_conversion, histogram_equalization, noise_reduction
+from src.feature_detection import edge_detection, morphological_operations
 
 def main():
   original_image = capture_image()
