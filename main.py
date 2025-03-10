@@ -12,6 +12,7 @@ without relying on built-in face detection.
 
 from src.preprocessing import grayscale_conversion, histogram_equalization, noise_reduction
 from src.feature_detection import edge_detection, morphological_operations, detect_eyes
+from src.distance_analysis import measure_distance, is_too_close
 
 
 def main():
@@ -29,5 +30,8 @@ def main():
   # Feature detection
   edge_image = edge_detection(filtered_image)
   morphed_image = morphological_operations(edge_image)
-  eye_regions, eye_center = detect_eyes(filtered_image)
+  eye_regions, eye_centers = detect_eyes(filtered_image)
 
+  if eye_centers is not None and len(eye_centers) >= 2:
+    eye_distance = measure_distance(eye_centers)
+    too_close = is_too_close(eye_distance, original_image.shape[1], threshold=500)

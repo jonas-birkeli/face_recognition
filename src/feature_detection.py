@@ -1,6 +1,7 @@
 """
 Module for feature detection functions, including edge detection and eye detection.
 """
+from operator import truediv
 
 import numpy as np
 
@@ -161,6 +162,7 @@ def morphological_operations(edge_image):
 def connected_components(binary_image, min_size=50):
   """
   Finds connected regions of a morphed binary image.
+  This method was generated using GitHub Copilot
 
   :param binary_image: Input binary image
   :param min_size: Minimum component size to keep
@@ -232,6 +234,7 @@ def connected_components(binary_image, min_size=50):
 def detect_eyes(image):
   """
   Detect eye regions in the image
+  This method was generated using GitHub Copilot
 
   :param image: Preprocessed greyscale image
 
