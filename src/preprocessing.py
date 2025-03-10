@@ -3,6 +3,8 @@ Module for image preprocessing functions
 """
 
 import numpy as np
+from numpy.conftest import dtype
+
 
 def grayscale_conversion(image):
   """
@@ -70,3 +72,33 @@ def histogram_equalization(gray_image):
 
   return equalized
 
+def noise_reduction(image, kernel_size=3):
+  """
+  Reduce noise using simple averaging filter
+
+  :param image: Input image
+  :param kernel_size: Size of averaging kernel (must be odd)
+
+  :return: Filtered image
+  """
+  if kernel_size % 2 == 0:
+    kernel_size += 1
+
+  pad = kernel_size // 2
+  height, width = image.shape
+
+  # Create pad to image
+  padded_img = np.zeros((height + 2*pad, width + 2*pad), dtype=np.float32)
+  padded_img[pad:pad+height, pad:pad+width] = image  # Put image in the middle
+
+  kernel = np.ones((kernel_size, kernel_size), dtype=np.float32) / (kernel_size * kernel_size)
+
+  # Apply convolution
+  filtered = np.zeros_like(image)
+
+  for i in range(height):
+    for j in range(width):
+      roi = padded_img[i:i+kernel_size, j:j+kernel_size] # Region of interest
+      filtered[i, j] = np.sum(roi * kernel)
+
+  return filtered.astype(np.uint8)
