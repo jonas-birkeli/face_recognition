@@ -11,7 +11,8 @@ without relying on built-in face detection.
 """
 
 from src.preprocessing import grayscale_conversion, histogram_equalization, noise_reduction
-from src.feature_detection import edge_detection, morphological_operations
+from src.feature_detection import edge_detection, morphological_operations, detect_eyes
+
 
 def main():
   original_image = capture_image()
@@ -29,3 +30,4 @@ def main():
   edge_image = edge_detection(filtered_image)
   morphed_image = morphological_operations(edge_image)
   eye_regions, eye_center = detect_eyes(filtered_image)
+
