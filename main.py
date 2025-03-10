@@ -19,7 +19,7 @@ def main():
   original_image = capture_image()
 
   if original_image is None:
-    print("Failed to acquire image. Exiting.")
+    print('Failed to acquire image. Exiting.')
     return
 
   # Preprocessing
@@ -35,3 +35,37 @@ def main():
   if eye_centers is not None and len(eye_centers) >= 2:
     eye_distance = measure_distance(eye_centers)
     too_close = is_too_close(eye_distance, original_image.shape[1], threshold=500)
+
+    pipeline_images = {
+      'Original Image': original_image,
+      'Grayscale Image': gray_image,
+      'Histogram Equalized': equalized_image,
+      'Noise Reduced': filtered_image,
+      'Edge Detection': edge_image,
+      'Morphological Operations': morphed_image,
+      'Upper Face Region': eye_regions
+    }
+
+    visualize_pipeline(pipelinse_images, save=False, save_dir='')
+
+    display_result(original_image, eye_centers, eye_distance, too_close, save=False, save_dir='')
+
+    if too_close:
+      print('Face is too close to the screen!')
+    else:
+      print('Face is at an acceptable distance from the screen.')
+    print(f'Eye distance: {eye_distance:.2f} pixels')
+    print(f'Distance ratio: {eye_distance / original_image.shape[1]:.2f}')
+  else:
+    print('Could not detect two distinct eye regions.')
+
+    pipeline_images = {
+      'Original Image': original_image,
+      'Grayscale Image': gray_image,
+      'Histogram Equalized': equalized_image,
+      'Noise Reduced': filtered_image,
+      'Edge Detection': edge_image,
+      'Morphological Operations': morphed_image,
+    }
+
+    visualize_pipeline(pipelinse_images, save=False, save_dir='')
