@@ -1,6 +1,7 @@
 """
 Module for image acquisition from webcam or file.
 """
+import time
 
 import cv2
 import numpy as np
@@ -42,6 +43,7 @@ def capture_image(from_file=False, file_path=None, webcam_index=0):
                 return None
 
             # Capture frame
+            time.sleep(1) # Allow camera to be accessed
             ret, frame = cap.read()
 
             # Release webcam

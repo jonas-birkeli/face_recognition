@@ -1,12 +1,71 @@
 """
 Module for image preprocessing functions
 """
-
+import cv2
 import numpy as np
-from numpy.conftest import dtype
 
 
-def grayscale_conversion(image):
+def rgb_to_hsv_conversion(image):
+  """
+  Converts RGB image to HSV color space.
+
+  :param image: RGB image
+
+  :return: HSV image
+  """
+
+  # Make a copy and ensure input is float
+  rgb = image.astype(np.float32) / 255.0
+
+  # Extract RGB channels
+  r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+
+  # Calculate Value (V)
+  v = np.max(rgb, axis=2)
+
+  # Calculate delta = max - min
+  min_rgb = np.min(rgb, axis=2)
+  delta = v - min_rgb
+
+  # Initialize H and S arrays
+  h = np.zeros_like(r)
+  s = np.zeros_like(r)
+
+  # Calculate Saturation (S)
+  # If V is 0, S is 0. Otherwise, S = delta/V
+  non_zero_v_mask = v > 0
+  s[non_zero_v_mask] = delta[non_zero_v_mask] / v[non_zero_v_mask]
+
+  # Calculate Hue (H)
+  # If delta is 0, H is 0
+  non_zero_delta_mask = delta > 0
+
+  # For pixels where R is max
+  r_max_mask = (v == r) & non_zero_delta_mask
+  h[r_max_mask] = (60 * (
+        (g[r_max_mask] - b[r_max_mask]) / delta[r_max_mask])) % 360
+
+  # For pixels where G is max
+  g_max_mask = (v == g) & non_zero_delta_mask
+  h[g_max_mask] = 60 * (
+        (b[g_max_mask] - r[g_max_mask]) / delta[g_max_mask]) + 120
+
+  # For pixels where B is max
+  b_max_mask = (v == b) & non_zero_delta_mask
+  h[b_max_mask] = 60 * (
+        (r[b_max_mask] - g[b_max_mask]) / delta[b_max_mask]) + 240
+
+  # Normalize H to [0, 1]
+  h /= 360.0
+
+  # Stack channels to form HSV image
+  hsv = np.stack([h, s, v], axis=2)
+
+
+  return hsv
+
+
+def rgb_to_grayscale_conversion(image):
   """
   Converts RGB image to grayscale using weighted method.
 
@@ -59,7 +118,7 @@ def histogram_equalization(gray_image):
 
   for i in range(256):
     if cdf[i] > cdf_min:
-      cdf_normalized[i] = int(((cdf[i] - cdf_min) * 256) / (gray_image.shape[0] * gray_image.shape[1] - cdf_min))
+      cdf_normalized[i] = int(((cdf[i] - cdf_min) * 255) / (gray_image.shape[0] * gray_image.shape[1] - cdf_min))
     else:
       cdf_normalized[i] = 0
 

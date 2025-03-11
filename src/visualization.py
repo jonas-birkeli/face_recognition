@@ -1,10 +1,8 @@
 """
 Module for visualizing images
 """
-import matplotlib
 import numpy as np
 from matplotlib import pyplot as plt
-matplotlib.use('Agg')
 
 
 def visualize_pipeline(image_dict, save=False, save_dir=None):
@@ -36,6 +34,7 @@ def visualize_pipeline(image_dict, save=False, save_dir=None):
 
   # Plot each image
   for i, (name, img) in enumerate(image_dict.items()):
+
     if i >= rows * cols:
       break
 
@@ -44,7 +43,7 @@ def visualize_pipeline(image_dict, save=False, save_dir=None):
 
     # Handle different image types
     if len(img.shape) == 3:  # Color image
-      ax.imshow(img[:, :, [2, 1, 0]])  # Convert BGR to RGB for display
+      ax.imshow(img)  # Convert BGR to RGB for display
     else:  # Grayscale image
       ax.imshow(img, cmap='gray')
 

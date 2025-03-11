@@ -9,8 +9,10 @@ if a face is too close to the screen
 using basic image processing techniques
 without relying on built-in face detection.
 """
+import cv2
+import numpy as np
 
-from src.preprocessing import grayscale_conversion, histogram_equalization, noise_reduction
+from src.preprocessing import rgb_to_grayscale_conversion, rgb_to_hsv_conversion, histogram_equalization, noise_reduction
 from src.feature_detection import edge_detection, morphological_operations, detect_eyes
 from src.distance_analysis import measure_distance, is_too_close
 from src.visualization import visualize_pipeline, display_result
@@ -26,23 +28,59 @@ def main():
 
   # Preprocessing
 
-  print("1")
-  gray_image = grayscale_conversion(original_image)
-  print("2")
-  equalized_image = histogram_equalization(gray_image)
-  print("3")
-  filtered_image = noise_reduction(equalized_image)
-  print("4")
+  hsv_image = rgb_to_hsv_conversion(original_image)
+  print("Converted to HSV")
 
+  cv2.imshow('Grayscale', hsv_image)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+
+  #gray_image = rgb_to_grayscale_conversion(original_image)
+  gray_image = hsv_image[:, :, 2] * 255
+  gray_image = gray_image.astype(np.uint8)
+  print("Converted to grayscale.")
+
+  cv2.imshow('Grayscale', gray_image)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+
+  equalized_image = histogram_equalization(gray_image)
+  print("Equalized using histogram")
+
+  cv2.imshow('Equalized', equalized_image)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+
+  filtered_image = noise_reduction(equalized_image)
+  print("Reduced noise")
+
+  cv2.imshow('Reduced noise', filtered_image)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
 
   # Feature detection
   edge_image = edge_detection(filtered_image)
-  print("5")
-  morphed_image = morphological_operations(edge_image)
-  print("6")
-  eye_regions, eye_centers = detect_eyes(filtered_image)
-  print("7")
+  print("Finding edges")
 
+  cv2.imshow('Edged', edge_image)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+
+  morphed_image = morphological_operations(edge_image)
+  print("Morphing image")
+
+  cv2.imshow('Morphed', morphed_image)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+
+  eye_regions, eye_centers = detect_eyes(filtered_image)
+  print("Detecting eyes")
+
+  cv2.imshow('Eye regions', eye_regions)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+
+  """
   if eye_centers is not None and len(eye_centers) >= 2:
     eye_distance = measure_distance(eye_centers)
     too_close = is_too_close(eye_distance, original_image.shape[1], threshold=0.25)
@@ -80,6 +118,7 @@ def main():
     }
 
     visualize_pipeline(pipeline_images, save=False, save_dir='')
+  """
 
 
 if __name__ == '__main__':
