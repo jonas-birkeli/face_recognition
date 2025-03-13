@@ -13,7 +13,7 @@ import cv2
 import numpy as np
 
 from src.preprocessing import rgb_to_grayscale_conversion, rgb_to_hsv_conversion, histogram_equalization, noise_reduction
-from src.feature_detection import edge_detection, morphological_operations, detect_eyes
+from src.feature_detection import edge_detection_sobel, morphological_operations, detect_eyes
 from src.distance_analysis import measure_distance, is_too_close
 from src.visualization import visualize_pipeline, display_result
 from src.image_aquisition import capture_image
@@ -59,7 +59,7 @@ def main():
   cv2.destroyAllWindows()
 
   # Feature detection
-  edge_image = edge_detection(filtered_image)
+  edge_image = edge_detection_sobel(filtered_image)
   print("Finding edges")
 
   cv2.imshow('Edged', edge_image)
