@@ -5,6 +5,10 @@ from operator import truediv
 
 import numpy as np
 
+from src.color_space_functions import rgb_to_hsv, rgb_to_ycbcr, \
+  detect_skin_ycbcr
+
+
 def edge_detection_sobel(image):
   """
   Apply Sobel-edge detection
@@ -276,71 +280,100 @@ def connected_components(binary_image, min_size=50):
   return output, components
 
 
-def detect_eyes(image):
+def detect_eyes_improved(image):
   """
-  Detect eye regions in the image
-  This method was generated using GitHub Copilot
+  Detect eye regions using multiple color spaces.
+  This method was created using GitHub Copilot.
 
-  :param image: Preprocessed greyscale image
+  :param image: Input color image
 
-  :return: Image showing eye regions
+  :return: Image showing eye regions, list of eye centers
   """
+  height, width = image.shape[:2]
 
-  height, _ = image.shape
+  # Convert to HSV and YCbCr color spaces
+  hsv_image = rgb_to_hsv(image)
+  ycbcr_image = rgb_to_ycbcr(image)
 
-  # Focus on upper half of image
-  upper_face = image[:height // 2, :]
+  # Detect skin regions using YCbCr
+  skin_mask = detect_skin_ycbcr(ycbcr_image)
 
-  # Apply adaptive thresholding to highlight potential eye regions
-  window_size = 15
-  eye_candidates = np.zeros_like(upper_face)
+  # Focus on upper half of the image for eye detection
+  upper_half = int(height * 0.6)  # Consider upper 60% of the image
+  face_upper = np.zeros_like(skin_mask)
+  face_upper[:upper_half, :] = skin_mask[:upper_half, :]
 
-  # Create padded image for local thresholding
-  pad = window_size // 2
-  padded = np.zeros(
-      (upper_face.shape[0] + 2 * pad, upper_face.shape[1] + 2 * pad),
-      dtype=np.float32)
-  padded[pad:pad + upper_face.shape[0],
-  pad:pad + upper_face.shape[1]] = upper_face
+  # Detect eye regions using HSV
+  hsv_eye_mask = detect_eyes_hsv(hsv_image[:upper_half, :])
 
-  for i in range(upper_face.shape[0]):
-    for j in range(upper_face.shape[1]):
-      # Get a local neighborhood
-      neighborhood = padded[i:i + window_size, j:j + window_size]
-      local_mean = np.mean(neighborhood)
+  # Pad the hsv_eye_mask to match the original image size
+  padded_eye_mask = np.zeros_like(skin_mask)
+  padded_eye_mask[:upper_half, :] = hsv_eye_mask
 
-      # Apply a threshold
-      if upper_face[i, j] < local_mean * 0.8:  # Threshold parameter
-        eye_candidates[i, j] = 1
+  # Combine skin and eye detection
+  refined_eye_regions = refine_eye_regions(padded_eye_mask, face_upper)
+
+  # Apply morphological operations to clean up the eye mask
+  se_open = create_structuring_element(size=1, shape='disk')
+  se_close = create_structuring_element(size=3, shape='disk')
+
+  # Open operation (erosion followed by dilation) to remove noise
+  eroded = erode(refined_eye_regions, se_open)
+  opened = dilate(eroded, se_open)
+
+  # Close operation (dilation followed by erosion) to fill holes
+  dilated = dilate(opened, se_close)
+  closed = erode(dilated, se_close)
 
   # Apply connected components to identify eye regions
-  labeled, components = connected_components(eye_candidates, min_size=50)
-
-  # Sort components by size and get top candidates
-  components.sort(key=lambda x: x['size'], reverse=True)
+  labeled, components = connected_components(closed, min_size=30)
 
   # Create visualization of eye regions
-  eye_regions = np.zeros_like(upper_face)
+  eye_regions = np.zeros_like(closed)
   for comp in components[:min(len(components), 5)]:  # Show top 5 candidates
     mask = labeled == comp['label']
     eye_regions[mask] = 255
 
-  # Get eye center (assuming the two largest components are eyes)
+  # Get eye centroids (assuming the two largest components are eyes)
   if len(components) >= 2:
-    eye_center = [components[0]['center'], components[1]['center']]
+    # Sort components by size
+    components.sort(key=lambda x: x['size'], reverse=True)
 
-    # Adjust y-coordinates to account for using only upper half
-    eye_center = [(y, x) for y, x in eye_center]
+    # Get the two largest components
+    eye_centroids = [components[0]['centroid'], components[1]['centroid']]
 
     # Filter eyes based on horizontal arrangement (eyes should be roughly at same height)
-    if abs(eye_center[0][0] - eye_center[1][0]) > height * 0.1:
+    if abs(eye_centroids[0][0] - eye_centroids[1][0]) > height * 0.1:
       # Eyes are not at similar heights, might not be reliable
       return eye_regions, None
 
     # Ensure left-to-right ordering
-    if eye_center[0][1] > eye_center[1][1]:
-      eye_center = [eye_center[1], eye_center[0]]
+    if eye_centroids[0][1] > eye_centroids[1][1]:
+      eye_centroids = [eye_centroids[1], eye_centroids[0]]
 
-    return eye_regions, eye_center
+    return eye_regions, eye_centroids
   else:
     return eye_regions, None
+
+def detect_eyes(image):
+  """
+  Detect eye regions in image.
+  A wrapper around improved eye detection
+  This method was generated using GitHub Copilot
+
+  :param image: Input image
+
+  :return: Image showing eye regions, list of eye centers
+  """
+  # Check if input is grayscale or color
+  if len(image.shape) == 2 or (len(image.shape) == 3 and image.shape[2] == 1):
+    # If grayscale, convert to 3-channel grayscale
+    if len(image.shape) == 2:
+      image_3ch = np.stack([image] * 3, axis=2)
+    else:
+      image_3ch = np.concatenate([image] * 3, axis=2)
+
+    return detect_eyes_improved(image_3ch)
+  else:
+    # Already color image
+    return detect_eyes_improved(image)

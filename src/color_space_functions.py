@@ -20,6 +20,7 @@ def rgb_to_hsv(rgb_image):
   # Get individual color channels
   r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
 
+
   # Calculate Value (V)
   v = np.max(rgb, axis=2)
 
